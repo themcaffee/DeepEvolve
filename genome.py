@@ -5,6 +5,8 @@ import logging
 import hashlib
 import copy
 
+import math
+
 from train import train_and_score
 
 class Genome():
@@ -24,23 +26,28 @@ class Genome():
         """
         self.accuracy         = 0.0
         self.all_possible_genes = all_possible_genes
-        self.geneparam        = geneparam #(dict): represents actual genome parameters
+        self.geneparam        = geneparam #(dict): represents actual genome parameters per layer
         self.u_ID             = u_ID
         self.parents          = [mom_ID, dad_ID]
         self.generation       = gen
-        
+
+        self.layer_genes = dict(all_possible_genes)
+        del self.layer_genes['nb_layers']
+        del self.layer_genes['optimizer']
+
         #hash only makes sense when we have specified the genes
         if not geneparam:
             self.hash = 0
         else:
             self.update_hash()
-        
+
     def update_hash(self):
         """
         Refesh each genome's unique hash - needs to run after any genome changes.
         """
-        genh = str(self.geneparam['nb_neurons']) + self.geneparam['activation'] \
-                + str(self.geneparam['nb_layers']) + self.geneparam['optimizer']
+        genh = str(self.geneparam['optimizer'])
+        for layer in self.geneparam['layers']:
+            genh += str(layer['nb_neurons']) + layer['activation']
 
         self.hash = hashlib.md5(genh.encode("UTF-8")).hexdigest()
 
@@ -51,11 +58,21 @@ class Genome():
         #print("set_genes_random")
         self.parents = [0,0] #very sad - no parents :(
 
-        for key in self.all_possible_genes:
-            self.geneparam[key] = random.choice(self.all_possible_genes[key])
-                
+        # random optimizer
+        self.geneparam['optimizer'] = random.choice(self.all_possible_genes['optimizer'])
+
+        # random number and parameters of layers
+        num_layers = random.choice(self.all_possible_genes['nb_layers'])
+        layers = []
+        for i in range(num_layers):
+            new_layer = {}
+            for param in self.layer_genes:
+                new_layer[param] = random.choice(self.all_possible_genes[param])
+            layers.append(new_layer)
+        self.geneparam['layers'] = layers
+
         self.update_hash()
-        
+
     def mutate_one_gene(self):
         """Randomly mutate one gene in the genome.
 
@@ -66,17 +83,34 @@ class Genome():
             (Genome): A randomly mutated genome object
 
         """
-        # Which gene shall we mutate? Choose one of N possible keys/genes.
-        gene_to_mutate = random.choice( list(self.all_possible_genes.keys()) )
+        # The number of possible choices. optimizer + num layers * num possible layer genes
+        possible_gene_choices = 1 + len(self.geneparam['layers']) * len(self.layer_genes)
+        gene_to_mutate = random.randint(0, possible_gene_choices - 1)
+        if gene_to_mutate == possible_gene_choices - 1:
+            # Update optimizer gene
+            current_value = self.geneparam['optimizer']
+            possible_choices = copy.deepcopy(self.all_possible_genes['optimizer'])
 
-        # And then let's mutate one of the genes.
-        # Make sure that this actually creates mutation
-        current_value    = self.geneparam[gene_to_mutate]
-        possible_choices = copy.deepcopy(self.all_possible_genes[gene_to_mutate])
-        
-        possible_choices.remove(current_value)
-        
-        self.geneparam[gene_to_mutate] = random.choice( possible_choices )
+            possible_choices.remove(current_value)
+
+            self.geneparam['optimizer'] = random.choice(possible_choices)
+        else:
+            # Update a layer gene
+            # Which gene shall we mutate? Choose one of N possible keys/genes.
+            layer_to_mutate = math.ceil(gene_to_mutate / len(self.layer_genes)) - 1
+            if gene_to_mutate % len(self.layer_genes) == 0:
+                gene_to_mutate = 'nb_neurons'
+            else:
+                gene_to_mutate = 'activation'
+
+            # And then let's mutate one of the genes.
+            # Make sure that this actually creates mutation
+            current_value = self.geneparam['layers'][layer_to_mutate][gene_to_mutate]
+            possible_choices = copy.deepcopy(self.all_possible_genes[gene_to_mutate])
+
+            possible_choices.remove(current_value)
+
+            self.geneparam['layers'][layer_to_mutate][gene_to_mutate] = random.choice( possible_choices )
 
         self.update_hash()
     

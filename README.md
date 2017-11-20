@@ -92,3 +92,16 @@ In this figure, you can see a small selection of genomes being trained for 4 epo
 This is a graphical overview of how the AI hyperparameter sets (aka genomes) evolve, showing the initial (random) population of genomes (left), and the various cycles of recombination and selection. 
 
 ![alt text](https://github.com/jliphard/DeepEvolve/blob/55473015692e2af75be35fa1baf6536e300032bc/Images/Network.png "Evolution of AI hyperparameter sets")
+
+
+
+## Updates from Base Repository
+
+
+More advanced representation of gene sequence to allow for more complex networks. Because of the nature of genetic algorithms, this shouldn't really increase
+the computation cost much.
+
+The old genome only represented the number of layers, number of neurons, activation,
+and optimizers. All of the layers used the same number of neurons and activation.
+
+The new genome allows for all of the layers to have a different number of neurons and activations.

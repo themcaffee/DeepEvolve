@@ -113,10 +113,10 @@ def print_genomes(genomes):
 
 def main():
     """Evolve a genome."""
-    population = 30 # Number of networks/genomes in each generation.
+    population = 15 # Number of networks/genomes in each generation.
     #we only need to train the new ones....
     
-    ds = 4
+    ds = 5
 
     if(   ds == 1):
         dataset = 'mnist_mlp'
@@ -126,6 +126,8 @@ def main():
         dataset = 'cifar10_mlp'
     elif (ds == 4):
         dataset = 'cifar10_cnn'
+    elif (ds == 5):
+        dataset = 'mnist_cnn_new'
     else:
         dataset = 'mnist_mlp'
 
@@ -163,11 +165,19 @@ def main():
             'activation': ['relu', 'elu', 'tanh', 'sigmoid', 'hard_sigmoid','softplus','linear'],
             'optimizer':  ['rmsprop', 'adam', 'sgd', 'adagrad','adadelta', 'adamax', 'nadam']
         }
+    elif dataset == 'mnist_cnn_new':
+        generations = 2
+        all_possible_genes = {
+            'nb_neurons': [16, 32, 64, 128],
+            'nb_layers':  [2, 3, 4, 5],
+            'activation': ['relu', 'elu', 'tanh', 'sigmoid', 'hard_sigmoid','softplus','linear'],
+            'optimizer':  ['rmsprop', 'adam', 'sgd', 'adagrad','adadelta', 'adamax', 'nadam']
+        }
     else:
         generations = 8 # Number of times to evolve the population.
         all_possible_genes = {
             'nb_neurons': [64, 128, 256, 512, 768, 1024],
-            'nb_layers':  [1, 2, 3, 4, 5],
+            'nb_layers':  [2, 3, 4, 5],
             'activation': ['relu', 'elu', 'tanh', 'sigmoid', 'hard_sigmoid','softplus','linear'],
             'optimizer':  ['rmsprop', 'adam', 'sgd', 'adagrad','adadelta', 'adamax', 'nadam']
         }

@@ -21,7 +21,7 @@ from allgenomes import AllGenomes
 class Evolver():
     """Class that implements genetic algorithm."""
 
-    def __init__(self, all_possible_genes, retain=0.15, random_select=0.1, mutate_chance=0.3):
+    def __init__(self, all_possible_genes, retain=0.2, random_select=0.1, mutate_chance=0.3):
         """Create an optimizer.
 
         Args:
@@ -108,76 +108,46 @@ class Evolver():
         return summed / float((len(pop)))
 
     def breed(self, mom, dad):
-        """Make two children from parental genes.
-
-        Args:
-            mother (dict): genome parameters
-            father (dict): genome parameters
-
-        Returns:
-            (list): Two network objects
-
         """
-        children = []
+        Make a child from two parent genes
+        :param mom: A genome parameter
+        :param dad: A genome parameter
+        :return: A child gene
+        """
+        child_gene = {}
+        mom_gene = mom.geneparam
+        dad_gene = dad.geneparam
 
-        #where do we recombine? 0, 1, 2, 3, 4... N?
-        #with four genes, there are three choices for the recombination
-        # ___ * ___ * ___ * ___ 
-        #0 -> no recombination, and N == length of dictionary -> no recombination
-        #0 and 4 just (re)create more copies of the parents
-        #so the range is always 1 to len(all_possible_genes) - 1
-        pcl = len(self.all_possible_genes)
-        
-        recomb_loc = random.randint(1,pcl - 1) 
+        # Choose the optimizer
+        child_gene['optimizer'] = random.choice([mom_gene['optimizer'], dad_gene['optimizer']])
 
-        #for _ in range(2): #make _two_ children - could also make more
-        child1 = {}
-        child2 = {}
+        # Combine the layers
+        max_len = max(len(mom_gene['layers']), len(dad_gene['layers']))
+        child_layers = []
+        for pos in range(max_len):
+            from_mom = bool(random.getrandbits(1))
+            # Add the layer from the correct parent IF it exists. Otherwise add nothing
+            if from_mom and len(mom_gene['layers']) > pos:
+                child_layers.append(mom_gene['layers'][pos])
+            elif not from_mom and len(dad_gene['layers']) > pos:
+                child_layers.append(dad_gene['layers'][pos])
+        child_gene['layers'] = child_layers
 
-        #enforce defined genome order using list 
-        #keys = ['nb_neurons', 'nb_layers', 'activation', 'optimizer']
-        keys = list(self.all_possible_genes)
-        keys = sorted(keys) #paranoia - just to make sure we do not add unintentional randomization
-
-        #*** CORE RECOMBINATION CODE ****
-        for x in range(0, pcl):
-            if x < recomb_loc:
-                child1[keys[x]] = mom.geneparam[keys[x]]
-                child2[keys[x]] = dad.geneparam[keys[x]]
-            else:
-                child1[keys[x]] = dad.geneparam[keys[x]]
-                child2[keys[x]] = mom.geneparam[keys[x]]
-
-        # Initialize a new genome
-        # Set its parameters to those just determined
-        # they both have the same mom and dad
-        genome1 = Genome( self.all_possible_genes, child1, self.ids.get_next_ID(), mom.u_ID, dad.u_ID, self.ids.get_Gen() )
-        genome2 = Genome( self.all_possible_genes, child2, self.ids.get_next_ID(), mom.u_ID, dad.u_ID, self.ids.get_Gen() )
+        child = Genome(self.all_possible_genes, child_gene, self.ids.get_next_ID(), mom.u_ID, dad.u_ID, self.ids.get_Gen())
 
         #at this point, there is zero guarantee that the genome is actually unique
 
         # Randomly mutate one gene
-        if self.mutate_chance > random.random(): 
-        	genome1.mutate_one_gene()
-
-        if self.mutate_chance > random.random(): 
-        	genome2.mutate_one_gene()
+        if self.mutate_chance > random.random():
+            child.mutate_one_gene()
 
         #do we have a unique child or are we just retraining one we already have anyway?
-        while self.master.is_duplicate(genome1):
-            genome1.mutate_one_gene()
+        while self.master.is_duplicate(child):
+            child.mutate_one_gene()
 
-        self.master.add_genome(genome1)
-        
-        while self.master.is_duplicate(genome2):
-            genome2.mutate_one_gene()
+        self.master.add_genome(child)
 
-        self.master.add_genome(genome2)
-        
-        children.append(genome1)
-        children.append(genome2)
-
-        return children
+        return child
 
     def evolve(self, pop):
         """Evolve a population of genomes.
@@ -225,6 +195,7 @@ class Evolver():
         
         # Now find out how many spots we have left to fill.
         ng_length      = len(new_generation)
+        print(str(ng_length))
 
         desired_length = len(pop) - ng_length
 
@@ -242,15 +213,8 @@ class Evolver():
             male   = new_generation[i_male]
             female = new_generation[i_female]
 
-            # Recombine and mutate
-            babies = self.breed(male, female)
-            # the babies are guaranteed to be novel
-
-            # Add the children one at a time.
-            for baby in babies:
-                # Don't grow larger than desired length.
-                #if len(children) < desired_length:
-                children.append(baby)
+            baby = self.breed(male, female)
+            children.append(baby)
 
         new_generation.extend(children)
 

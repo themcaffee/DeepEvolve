@@ -235,12 +235,67 @@ def compile_model_cnn(geneparam, nb_classes, input_shape):
 
     return model
 
+
+def compile_model_cnn_new(geneparam, nb_classes, input_shape):
+    """Compile a sequential model.
+
+    Args:
+        genome (dict): the parameters of the genome
+
+    Returns:
+        a compiled network.
+
+    """
+    # Get our network parameters.
+    nb_layers  = len(geneparam)
+
+    logging.info("Architecture: {}".format(str(geneparam)))
+
+    model = Sequential()
+
+    # Add each layer except for the last dense layer.
+    for i in range(0, nb_layers - 1):
+        # Get the parameters for this layer
+        nb_neurons = geneparam['layers'][i]['nb_neurons']
+        activation = geneparam['layers'][i]['activation']
+
+        # Need input shape for first layer.
+        if i == 0:
+            model.add(Conv2D(nb_neurons, kernel_size = (3, 3), activation = activation, padding='same', input_shape = input_shape))
+        else:
+            model.add(Conv2D(nb_neurons, kernel_size = (3, 3), activation = activation))
+
+        if i < 2: #otherwise we hit zero
+            model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        model.add(Dropout(0.2))
+
+    model.add(Flatten())
+    dense_nb_neurons = geneparam['layers'][nb_layers - 1]['nb_neurons']
+    dense_activation = geneparam['layers'][nb_layers - 1]['activation']
+    model.add(Dense(dense_nb_neurons, activation=dense_activation))
+    model.add(Dropout(0.5))
+    model.add(Dense(nb_classes, activation='softmax'))
+
+    #BAYESIAN CONVOLUTIONAL NEURAL NETWORKS WITH BERNOULLI APPROXIMATE VARIATIONAL INFERENCE
+    #need to read this paper
+
+    optimizer = geneparam['optimizer']
+
+    model.compile(loss='categorical_crossentropy',
+                  optimizer=optimizer,
+                  metrics=['accuracy'])
+
+    return model
+
+
 class LossHistory(Callback):
     def on_train_begin(self, logs={}):
         self.losses = []
 
     def on_batch_end(self, batch, logs={}):
         self.losses.append(logs.get('loss'))
+
 
 def train_and_score(geneparam, dataset):
     """Train the model, return test loss.
@@ -258,10 +313,10 @@ def train_and_score(geneparam, dataset):
         nb_classes, batch_size, input_shape, x_train, x_test, y_train, y_test, epochs = get_cifar10_cnn()
     elif dataset == 'mnist_mlp':
         nb_classes, batch_size, input_shape, x_train, x_test, y_train, y_test, epochs = get_mnist_mlp()
-    elif dataset == 'mnist_cnn':
+    elif dataset == 'mnist_cnn' or dataset == 'mnist_cnn_new':
         nb_classes, batch_size, input_shape, x_train, x_test, y_train, y_test, epochs = get_mnist_cnn()
 
-    logging.info("Compling Keras model")
+    logging.info("Compiling Keras model")
 
     if dataset   == 'cifar10_mlp':
         model = compile_model_mlp(geneparam, nb_classes, input_shape)
@@ -271,6 +326,8 @@ def train_and_score(geneparam, dataset):
         model = compile_model_mlp(geneparam, nb_classes, input_shape)
     elif dataset == 'mnist_cnn':
         model = compile_model_cnn(geneparam, nb_classes, input_shape)
+    elif dataset == 'mnist_cnn_new':
+        model = compile_model_cnn_new(geneparam, nb_classes, input_shape)
 
     history = LossHistory()
 
