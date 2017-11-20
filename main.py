@@ -52,6 +52,7 @@ def get_average_accuracy(genomes):
 
     return total_accuracy / len(genomes)
 
+
 def generate(generations, population, all_possible_genes, dataset):
     """Generate a network with the genetic algorithm.
 
@@ -69,7 +70,7 @@ def generate(generations, population, all_possible_genes, dataset):
     genomes = evolver.create_population(population)
 
     # Evolve the generation.
-    for i in range( generations ):
+    for i in range(generations):
 
         logging.info("***Now in generation %d of %d***" % (i + 1, generations))
 
@@ -99,6 +100,7 @@ def generate(generations, population, all_possible_genes, dataset):
     #save_path = saver.save(sess, '/output/model.ckpt')
     #print("Model saved in file: %s" % save_path)
 
+
 def print_genomes(genomes):
     """Print a list of genomes.
 
@@ -111,90 +113,45 @@ def print_genomes(genomes):
     for genome in genomes:
         genome.print_genome()
 
+
 def main():
     """Evolve a genome."""
-    population = 20 # Number of networks/genomes in each generation.
+    population = 15 # Number of networks/genomes in each generation.
+    generations = 2
     #we only need to train the new ones....
-    
-    ds = 6
 
-    if(   ds == 1):
-        dataset = 'mnist_mlp'
-    elif (ds == 2):
+    ds = 1
+
+    if ds == 1:
         dataset = 'mnist_cnn'
-    elif (ds == 3):
-        dataset = 'cifar10_mlp'
-    elif (ds == 4):
+    elif ds == 2:
         dataset = 'cifar10_cnn'
-    elif (ds == 5):
-        dataset = 'mnist_cnn_new'
-    elif (ds == 6):
-        dataset = 'cifar10_cnn_new'
     else:
-        dataset = 'mnist_mlp'
+        raise Exception("Invalid dataset")
 
     print("***Dataset:", dataset)
 
     if dataset == 'mnist_cnn':
-        generations = 8 # Number of times to evolve the population.
         all_possible_genes = {
             'nb_neurons': [16, 32, 64, 128],
-            'nb_layers':  [1, 2, 3, 4 ,5],
-            'activation': ['relu', 'elu', 'tanh', 'sigmoid', 'hard_sigmoid','softplus','linear'],
-            'optimizer':  ['rmsprop', 'adam', 'sgd', 'adagrad','adadelta', 'adamax', 'nadam']
-        }
-    elif dataset == 'mnist_mlp':
-        generations = 8 # Number of times to evolve the population.
-        all_possible_genes = {
-            'nb_neurons': [64, 128], #, 256, 512, 768, 1024],
-            'nb_layers':  [1, 2, 3, 4, 5],
-            'activation': ['relu', 'elu', 'tanh', 'sigmoid', 'hard_sigmoid','softplus','linear'],
-            'optimizer':  ['rmsprop', 'adam', 'sgd', 'adagrad','adadelta', 'adamax', 'nadam']
-        }
-    elif dataset == 'cifar10_mlp':
-        generations = 8 # Number of times to evolve the population.
-        all_possible_genes = {
-            'nb_neurons': [64, 128, 256, 512, 768, 1024],
-            'nb_layers':  [1, 2, 3, 4, 5],
+            'nb_layers':  [2, 3, 4, 5],
             'activation': ['relu', 'elu', 'tanh', 'sigmoid', 'hard_sigmoid','softplus','linear'],
             'optimizer':  ['rmsprop', 'adam', 'sgd', 'adagrad','adadelta', 'adamax', 'nadam']
         }
     elif dataset == 'cifar10_cnn':
-        generations = 8 # Number of times to evolve the population.
         all_possible_genes = {
             'nb_neurons': [16, 32, 64, 128],
-            'nb_layers':  [1, 2, 3, 4, 5],
-            'activation': ['relu', 'elu', 'tanh', 'sigmoid', 'hard_sigmoid','softplus','linear'],
-            'optimizer':  ['rmsprop', 'adam', 'sgd', 'adagrad','adadelta', 'adamax', 'nadam']
-        }
-    elif dataset == 'mnist_cnn_new':
-        generations = 2
-        all_possible_genes = {
-            'nb_neurons': [16, 32, 64, 128],
-            'nb_layers':  [2, 3, 4, 5],
-            'activation': ['relu', 'elu', 'tanh', 'sigmoid', 'hard_sigmoid','softplus','linear'],
-            'optimizer':  ['rmsprop', 'adam', 'sgd', 'adagrad','adadelta', 'adamax', 'nadam']
-        }
-    elif dataset == 'cifar10_cnn_new':
-        generations = 8
-        all_possible_genes = {
-            'nb_neurons': [16, 32, 64, 128, 256],
-            'nb_layers':  [2, 3, 4, 5, 6, 7, 8],
+            'nb_layers':  [2, 3, 4, 5, 6, 7],
             'activation': ['relu', 'elu', 'tanh', 'sigmoid', 'hard_sigmoid','softplus','linear'],
             'optimizer':  ['rmsprop', 'adam', 'sgd', 'adagrad','adadelta', 'adamax', 'nadam']
         }
     else:
-        generations = 8 # Number of times to evolve the population.
-        all_possible_genes = {
-            'nb_neurons': [64, 128, 256, 512, 768, 1024],
-            'nb_layers':  [2, 3, 4, 5],
-            'activation': ['relu', 'elu', 'tanh', 'sigmoid', 'hard_sigmoid','softplus','linear'],
-            'optimizer':  ['rmsprop', 'adam', 'sgd', 'adagrad','adadelta', 'adamax', 'nadam']
-        }
-            
+        raise Exception("Invalid dataset")
+
     print("***Evolving for %d generations with population size = %d***" % (generations, population))
 
     generate(generations, population, all_possible_genes, dataset)
+
 
 if __name__ == '__main__':
     main()

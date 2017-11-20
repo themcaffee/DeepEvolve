@@ -85,7 +85,12 @@ class Genome():
         """
         # The number of possible choices. optimizer + num layers * num possible layer genes
         possible_gene_choices = 1 + len(self.geneparam['layers']) * len(self.layer_genes)
+        # Add the chance of a new layer if not already at the maximum
+        new_layer_possible = len(self.geneparam['layers']) < max(self.all_possible_genes['nb_layers'])
+        if new_layer_possible:
+            possible_gene_choices += 1
         gene_to_mutate = random.randint(0, possible_gene_choices - 1)
+
         if gene_to_mutate == possible_gene_choices - 1:
             # Update optimizer gene
             current_value = self.geneparam['optimizer']
@@ -94,6 +99,12 @@ class Genome():
             possible_choices.remove(current_value)
 
             self.geneparam['optimizer'] = random.choice(possible_choices)
+        elif new_layer_possible and gene_to_mutate == possible_gene_choices - 2:
+            # Add an entirely new layer
+            new_layer = {}
+            new_layer['nb_neurons'] = random.choice(self.all_possible_genes['nb_neurons'])
+            new_layer['activation'] = random.choice(self.all_possible_genes['activation'])
+            self.geneparam['layers'].append(new_layer)
         else:
             # Update a layer gene
             # Which gene shall we mutate? Choose one of N possible keys/genes.
