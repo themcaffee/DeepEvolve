@@ -309,7 +309,7 @@ def train_and_score(geneparam, dataset):
 
     if dataset   == 'cifar10_mlp':
         nb_classes, batch_size, input_shape, x_train, x_test, y_train, y_test, epochs = get_cifar10_mlp()
-    elif dataset == 'cifar10_cnn':
+    elif dataset == 'cifar10_cnn' or dataset == 'cifar10_cnn_new':
         nb_classes, batch_size, input_shape, x_train, x_test, y_train, y_test, epochs = get_cifar10_cnn()
     elif dataset == 'mnist_mlp':
         nb_classes, batch_size, input_shape, x_train, x_test, y_train, y_test, epochs = get_mnist_mlp()
@@ -322,6 +322,8 @@ def train_and_score(geneparam, dataset):
         model = compile_model_mlp(geneparam, nb_classes, input_shape)
     elif dataset == 'cifar10_cnn':
         model = compile_model_cnn(geneparam, nb_classes, input_shape)
+    elif dataset == 'cifar10_cnn_new':
+        model = compile_model_cnn_new(geneparam, nb_classes, input_shape)
     elif dataset == 'mnist_mlp':
         model = compile_model_mlp(geneparam, nb_classes, input_shape)
     elif dataset == 'mnist_cnn':
