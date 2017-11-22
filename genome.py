@@ -5,9 +5,8 @@ import logging
 import hashlib
 import copy
 
-import math
-
 from train import train_and_score
+
 
 class Genome():
     """
@@ -55,7 +54,6 @@ class Genome():
             
     def set_genes_random(self):
         """Create a random genome."""
-        #print("set_genes_random")
         self.parents = [0,0] #very sad - no parents :(
 
         # random optimizer
@@ -84,14 +82,21 @@ class Genome():
 
         """
         # The number of possible choices. optimizer + num layers * num possible layer genes
-        possible_gene_choices = 1 + len(self.geneparam['layers']) * len(self.layer_genes)
+        possible_gene_choices = [{'type': 'optimizer'}]
+        for layer in range(len(self.geneparam['layers'])):
+            for gene in self.layer_genes:
+                possible_gene_choices.append({'type': 'gene', 'layer': layer, 'gene': gene})
+
         # Add the chance of a new layer if not already at the maximum
         new_layer_possible = len(self.geneparam['layers']) < max(self.all_possible_genes['nb_layers'])
         if new_layer_possible:
-            possible_gene_choices += 1
-        gene_to_mutate = random.randint(0, possible_gene_choices - 1)
+            possible_gene_choices.append({'type': 'new_layer'})
+        remove_layer_possible = len(self.geneparam['layers']) > 2
+        if remove_layer_possible:
+            possible_gene_choices.append({'type': 'remove_layer'})
+        mutation = random.choice(possible_gene_choices)
 
-        if gene_to_mutate == possible_gene_choices - 1:
+        if mutation['type'] == 'optimizer':
             # Update optimizer gene
             current_value = self.geneparam['optimizer']
             possible_choices = copy.deepcopy(self.all_possible_genes['optimizer'])
@@ -99,21 +104,20 @@ class Genome():
             possible_choices.remove(current_value)
 
             self.geneparam['optimizer'] = random.choice(possible_choices)
-        elif new_layer_possible and gene_to_mutate == possible_gene_choices - 2:
+        elif mutation['type'] == 'new_layer':
             # Add an entirely new layer
             new_layer = {}
             new_layer['nb_neurons'] = random.choice(self.all_possible_genes['nb_neurons'])
             new_layer['activation'] = random.choice(self.all_possible_genes['activation'])
             self.geneparam['layers'].append(new_layer)
-        else:
+        elif mutation['type'] == 'remove_layer':
+            # Remove a layer
+            layer = random.randint(0, len(self.geneparam['layers']) - 1)
+            del self.geneparam['layers'][layer]
+        elif mutation['type'] == 'gene':
             # Update a layer gene
-            # Which gene shall we mutate? Choose one of N possible keys/genes.
-            layer_to_mutate = math.ceil(gene_to_mutate / len(self.layer_genes)) - 1
-            if gene_to_mutate % len(self.layer_genes) == 0:
-                gene_to_mutate = 'nb_neurons'
-            else:
-                gene_to_mutate = 'activation'
-
+            layer_to_mutate = mutation['layer']
+            gene_to_mutate = mutation['gene']
             # And then let's mutate one of the genes.
             # Make sure that this actually creates mutation
             current_value = self.geneparam['layers'][layer_to_mutate][gene_to_mutate]
@@ -121,7 +125,7 @@ class Genome():
 
             possible_choices.remove(current_value)
 
-            self.geneparam['layers'][layer_to_mutate][gene_to_mutate] = random.choice( possible_choices )
+            self.geneparam['layers'][layer_to_mutate][gene_to_mutate] = random.choice(possible_choices)
 
         self.update_hash()
     

@@ -117,10 +117,10 @@ def print_genomes(genomes):
 def main():
     """Evolve a genome."""
     population = 15 # Number of networks/genomes in each generation.
-    generations = 2
+    generations = 8
     #we only need to train the new ones....
 
-    ds = 1
+    ds = 2
 
     if ds == 1:
         dataset = 'mnist_cnn'
@@ -140,8 +140,8 @@ def main():
         }
     elif dataset == 'cifar10_cnn':
         all_possible_genes = {
-            'nb_neurons': [16, 32, 64, 128],
-            'nb_layers':  [2, 3, 4, 5, 6, 7],
+            'nb_neurons': [16, 32, 64, 128, 256, 512, 1024],
+            'nb_layers':  [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
             'activation': ['relu', 'elu', 'tanh', 'sigmoid', 'hard_sigmoid','softplus','linear'],
             'optimizer':  ['rmsprop', 'adam', 'sgd', 'adagrad','adadelta', 'adamax', 'nadam']
         }
