@@ -100,16 +100,15 @@ class Genome():
             # Update optimizer gene
             current_value = self.geneparam['optimizer']
             possible_choices = copy.deepcopy(self.all_possible_genes['optimizer'])
-
             possible_choices.remove(current_value)
-
             self.geneparam['optimizer'] = random.choice(possible_choices)
         elif mutation['type'] == 'new_layer':
             # Add an entirely new layer
             new_layer = {}
             new_layer['nb_neurons'] = random.choice(self.all_possible_genes['nb_neurons'])
             new_layer['activation'] = random.choice(self.all_possible_genes['activation'])
-            self.geneparam['layers'].append(new_layer)
+            # Insert into a random position in the network
+            self.geneparam['layers'].insert(len(self.geneparam['layers']) - 1, new_layer)
         elif mutation['type'] == 'remove_layer':
             # Remove a layer
             layer = random.randint(0, len(self.geneparam['layers']) - 1)
