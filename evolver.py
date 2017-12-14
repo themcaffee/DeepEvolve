@@ -61,7 +61,7 @@ class Evolver():
         while i < count:
             
             # Initialize a new genome.
-            genome = Genome( self.all_possible_genes, {}, self.ids.get_next_ID(), 0, 0, self.ids.get_Gen() )
+            genome = Genome(self.all_possible_genes, {}, self.ids.get_next_ID(), 0, 0, self.ids.get_Gen(), [])
 
             # Set it to random parameters.
             genome.set_genes_random()
@@ -115,6 +115,7 @@ class Evolver():
         :return: A child gene
         """
         child_gene = {}
+        child_weight_files = []
         mom_gene = mom.geneparam
         dad_gene = dad.geneparam
 
@@ -129,11 +130,16 @@ class Evolver():
             # Add the layer from the correct parent IF it exists. Otherwise add nothing
             if from_mom and len(mom_gene['layers']) > pos:
                 child_layers.append(mom_gene['layers'][pos])
+                # Add the mom's weight files for initialization
+                child_weight_files.append(mom.weight_files[pos])
             elif not from_mom and len(dad_gene['layers']) > pos:
                 child_layers.append(dad_gene['layers'][pos])
+                # Add the dad's weight files for initialization
+                child_weight_files.append(dad.weight_files[pos])
         child_gene['layers'] = child_layers
 
-        child = Genome(self.all_possible_genes, child_gene, self.ids.get_next_ID(), mom.u_ID, dad.u_ID, self.ids.get_Gen())
+        child = Genome(self.all_possible_genes, child_gene, self.ids.get_next_ID(), mom.u_ID, dad.u_ID,
+                       self.ids.get_Gen(), child_weight_files)
 
         #at this point, there is zero guarantee that the genome is actually unique
 

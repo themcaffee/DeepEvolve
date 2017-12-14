@@ -7,7 +7,11 @@ and also on
     https://github.com/fchollet/keras/blob/master/examples/mnist_cnn.py
 
 """
+from pprint import pprint
 
+import pickle
+
+import os
 from keras.datasets       import mnist, cifar10
 from keras.models         import Sequential
 from keras.layers         import Dense, Dropout, Flatten
@@ -17,6 +21,7 @@ from keras.layers         import Conv2D, MaxPooling2D
 from keras                import backend as K
 
 import logging
+from models import save_genome
 
 # Helper: Early stopping.
 early_stopper = EarlyStopping( monitor='val_loss', min_delta=0.1, patience=2, verbose=0, mode='auto' )
@@ -104,7 +109,7 @@ def get_mnist_cnn():
     return (nb_classes, batch_size, input_shape, x_train, x_test, y_train, y_test, epochs)
 
 
-def compile_model_cnn(geneparam, nb_classes, input_shape):
+def compile_model_cnn(genome, nb_classes, input_shape):
     """Compile a sequential model.
 
     Args:
@@ -114,24 +119,35 @@ def compile_model_cnn(geneparam, nb_classes, input_shape):
         a compiled network.
 
     """
+    geneparam = genome.geneparam
     # Get our network parameters.
-    nb_layers  = len(geneparam)
+    nb_layers  = len(geneparam['layers'])
+    print("NUMBER OF LAYERS: " + str(nb_layers))
 
     logging.info("Architecture: {}".format(str(geneparam)))
 
     model = Sequential()
 
     # Add each layer except for the last dense layer.
-    for i in range(0, nb_layers - 1):
+    for i in range(0, nb_layers):
         # Get the parameters for this layer
         nb_neurons = geneparam['layers'][i]['nb_neurons']
         activation = geneparam['layers'][i]['activation']
 
         # Need input shape for first layer.
         if i == 0:
-            model.add(Conv2D(nb_neurons, kernel_size = (3, 3), activation = activation, padding='same', input_shape = input_shape))
+            layer = Conv2D(nb_neurons, kernel_size = (3, 3), activation = activation, padding='same', input_shape = input_shape)
         else:
-            model.add(Conv2D(nb_neurons, kernel_size = (3, 3), activation = activation))
+            layer = Conv2D(nb_neurons, kernel_size = (3, 3), activation = activation)
+
+        # Set the initial weights to the previously learned weights
+        if len(genome.weight_files) > 0:
+            weight_filename = genome.weight_files[i]
+            if weight_filename != '':
+                weights = pickle.load(open(weight_filename))
+                layer.set_weights(weights)
+
+        model.add(layer)
 
         if i < 2: #otherwise we hit zero
             model.add(MaxPooling2D(pool_size=(2, 2)))
@@ -165,7 +181,7 @@ class LossHistory(Callback):
         self.losses.append(logs.get('loss'))
 
 
-def train_and_score(geneparam, dataset):
+def train_and_score(genome, dataset):
     """Train the model, return test loss.
 
     Args:
@@ -182,7 +198,7 @@ def train_and_score(geneparam, dataset):
 
     logging.info("Compiling Keras model")
 
-    model = compile_model_cnn(geneparam, nb_classes, input_shape)
+    model = compile_model_cnn(genome, nb_classes, input_shape)
 
     history = LossHistory()
 
@@ -200,8 +216,30 @@ def train_and_score(geneparam, dataset):
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
 
+    pprint(model.get_config())
+
+    # Create the folder to hold the weight files for this model
+    model_folder = 'weight_files/{}'.format(genome.hash)
+    if not os.path.exists(model_folder):
+        os.makedirs(model_folder)
+
+    # Save all of the layer weights as files
+    weight_filenames = []
+    conv_layer_count = 0
+    for i in range(len(model.get_config())):
+        layer = model.get_layer(index=i)
+        if layer.__class__.__name__ == "Conv2D":
+            weights = layer.get_weights()
+            filename = "weight_files/{}/weights_{}.p".format(genome.hash, str(conv_layer_count))
+            weight_filenames.append(filename)
+            pickle.dump(weights, open(filename, "wb"))
+            genome.weight_files.append(filename)
+            conv_layer_count += 1
+    genome.accuracy = score[1]
+    save_genome(genome, weight_filenames)
+
     K.clear_session()
     #we do not care about keeping any of this in memory - 
     #we just need to know the final scores and the architecture
-    
+
     return score[1]  # 1 is accuracy. 0 is loss.

@@ -4,6 +4,7 @@ import random
 import logging
 import hashlib
 import copy
+from pprint import pprint
 
 from train import train_and_score
 
@@ -13,7 +14,7 @@ class Genome():
     Represents one genome and all relevant utility functions (add, mutate, etc.).
     """
 
-    def __init__( self, all_possible_genes = None, geneparam = {}, u_ID = 0, mom_ID = 0, dad_ID = 0, gen = 0 ):
+    def __init__( self, all_possible_genes = None, geneparam = {}, u_ID = 0, mom_ID = 0, dad_ID = 0, gen = 0 , weight_files = []):
         """Initialize a genome.
 
         Args:
@@ -29,6 +30,7 @@ class Genome():
         self.u_ID             = u_ID
         self.parents          = [mom_ID, dad_ID]
         self.generation       = gen
+        self.weight_files     = weight_files
 
         self.layer_genes = dict(all_possible_genes)
         del self.layer_genes['nb_layers']
@@ -108,11 +110,15 @@ class Genome():
             new_layer['nb_neurons'] = random.choice(self.all_possible_genes['nb_neurons'])
             new_layer['activation'] = random.choice(self.all_possible_genes['activation'])
             # Insert into a random position in the network
-            self.geneparam['layers'].insert(len(self.geneparam['layers']) - 1, new_layer)
+            index = len(self.geneparam['layers']) - 1
+            self.geneparam['layers'].insert(index, new_layer)
+            self.weight_files.insert(index, '')
         elif mutation['type'] == 'remove_layer':
             # Remove a layer
             layer = random.randint(0, len(self.geneparam['layers']) - 1)
             del self.geneparam['layers'][layer]
+            # Remove the weight file entry for this layer
+            del self.weight_files[layer]
         elif mutation['type'] == 'gene':
             # Update a layer gene
             layer_to_mutate = mutation['layer']
@@ -125,6 +131,8 @@ class Genome():
             possible_choices.remove(current_value)
 
             self.geneparam['layers'][layer_to_mutate][gene_to_mutate] = random.choice(possible_choices)
+            # Remove the weights file for this layer because it is now invalid
+            self.weight_files[layer_to_mutate] = ''
 
         self.update_hash()
     
@@ -156,8 +164,8 @@ class Genome():
             dataset (str): Name of dataset to use.
 
         """
-        if self.accuracy == 0.0: #don't bother retraining ones we already trained 
-            self.accuracy = train_and_score(self.geneparam, trainingset)
+        if self.accuracy == 0.0: #don't bother retraining ones we already trained
+            self.accuracy = train_and_score(self, trainingset)
 
     def print_genome(self):
         """Print out a genome."""

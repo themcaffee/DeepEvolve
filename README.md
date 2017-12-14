@@ -105,3 +105,10 @@ The old genome only represented the number of layers, number of neurons, activat
 and optimizers. All of the layers used the same number of neurons and activation.
 
 The new genome allows for all of the layers to have a different number of neurons and activations.
+
+
+
+### TODOs
+
+- Initialize layer weights to the previously trained weights
+- Distributed parallel computing

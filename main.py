@@ -120,7 +120,7 @@ def main():
     generations = 8
     #we only need to train the new ones....
 
-    ds = 2
+    ds = 1
 
     if ds == 1:
         dataset = 'mnist_cnn'
@@ -134,7 +134,7 @@ def main():
     if dataset == 'mnist_cnn':
         all_possible_genes = {
             'nb_neurons': [16, 32, 64, 128],
-            'nb_layers':  [2, 3, 4, 5],
+            'nb_layers':  [2, 3, 4],
             'activation': ['relu', 'elu', 'tanh', 'sigmoid', 'hard_sigmoid','softplus','linear'],
             'optimizer':  ['rmsprop', 'adam', 'sgd', 'adagrad','adadelta', 'adamax', 'nadam']
         }

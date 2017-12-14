@@ -5,3 +5,6 @@
 *.floydexpt
 *.floydignore
 __pycache__/
+
+database.db
+weight_files/*
