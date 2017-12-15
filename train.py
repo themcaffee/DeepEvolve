@@ -68,7 +68,8 @@ def get_mnist_cnn():
     # Set defaults.
     nb_classes = 10 #dataset dependent
     batch_size = 128
-    epochs     = 4
+    # TODO change this to 4 or make configureable from cli?
+    epochs     = 1
 
     # Input image dimensions
     img_rows, img_cols = 28, 28
@@ -134,18 +135,24 @@ def compile_model_cnn(genome, nb_classes, input_shape):
         nb_neurons = geneparam['layers'][i]['nb_neurons']
         activation = geneparam['layers'][i]['activation']
 
-        # Need input shape for first layer.
-        if i == 0:
-            layer = Conv2D(nb_neurons, kernel_size = (3, 3), activation = activation, padding='same', input_shape = input_shape)
-        else:
-            layer = Conv2D(nb_neurons, kernel_size = (3, 3), activation = activation)
-
         # Set the initial weights to the previously learned weights
+        weights = None
         if len(genome.weight_files) > 0:
             weight_filename = genome.weight_files[i]
             if weight_filename != '':
-                weights = pickle.load(open(weight_filename))
-                layer.set_weights(weights)
+                weights = pickle.load(open(weight_filename, 'rb'))
+
+        # Need input shape for first layer.
+        if i == 0:
+            if weights:
+                layer = Conv2D(nb_neurons, kernel_size = (3, 3), activation = activation, padding='same', input_shape = input_shape, weights=weights)
+            else:
+                layer = Conv2D(nb_neurons, kernel_size = (3, 3), activation = activation, padding='same', input_shape = input_shape)
+        else:
+            if weights:
+                layer = Conv2D(nb_neurons, kernel_size = (3, 3), activation = activation, weights=weights)
+            else:
+                layer = Conv2D(nb_neurons, kernel_size = (3, 3), activation = activation)
 
         model.add(layer)
 
@@ -215,8 +222,6 @@ def train_and_score(genome, dataset):
 
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
-
-    pprint(model.get_config())
 
     # Create the folder to hold the weight files for this model
     model_folder = 'weight_files/{}'.format(genome.hash)

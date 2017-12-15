@@ -111,7 +111,11 @@ class Genome():
             new_layer['activation'] = random.choice(self.all_possible_genes['activation'])
             # Insert into a random position in the network
             index = len(self.geneparam['layers']) - 1
+            print("Before new layer")
+            pprint(self.geneparam['layers'])
             self.geneparam['layers'].insert(index, new_layer)
+            print("After new layer")
+            pprint(self.geneparam['layers'])
             self.weight_files.insert(index, '')
         elif mutation['type'] == 'remove_layer':
             # Remove a layer
@@ -132,7 +136,15 @@ class Genome():
 
             self.geneparam['layers'][layer_to_mutate][gene_to_mutate] = random.choice(possible_choices)
             # Remove the weights file for this layer because it is now invalid
+            print("Layer to mutate: {}".format(str(layer_to_mutate)))
             self.weight_files[layer_to_mutate] = ''
+            # Invalidate the weights from the layer after because
+            # the input for that layer is now invalid
+            if gene_to_mutate == 'nb_neurons' and layer_to_mutate < len(self.geneparam['layers']) - 1:
+                self.weight_files[layer_to_mutate + 1] = ''
+
+        pprint(self.geneparam)
+        pprint(mutation)
 
         self.update_hash()
     

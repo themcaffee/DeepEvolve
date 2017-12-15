@@ -13,6 +13,8 @@ import copy
 
 from functools  import reduce
 from operator   import add
+from pprint import pprint
+
 from genome     import Genome
 from idgen      import IDgen
 from allgenomes import AllGenomes
@@ -128,14 +130,32 @@ class Evolver():
         for pos in range(max_len):
             from_mom = bool(random.getrandbits(1))
             # Add the layer from the correct parent IF it exists. Otherwise add nothing
+            # TODO DRY up this section of code
             if from_mom and len(mom_gene['layers']) > pos:
                 child_layers.append(mom_gene['layers'][pos])
-                # Add the mom's weight files for initialization
-                child_weight_files.append(mom.weight_files[pos])
+                # Only add the weight files of parent if the previous
+                # layer has the same amount of neurons as the parent
+                if pos != 0 and child_layers[-2]['nb_neurons'] == mom_gene['layers'][pos - 1]['nb_neurons']:
+                    child_weight_files.append(mom.weight_files[pos])
+                    print("Mom weight files being added")
+                    pprint(mom.weight_files[pos])
+                else:
+                    child_weight_files.append('')
+                    print("Mom weight files not added")
+                    pprint(mom.weight_files)
+                    pprint(child_weight_files)
             elif not from_mom and len(dad_gene['layers']) > pos:
                 child_layers.append(dad_gene['layers'][pos])
-                # Add the dad's weight files for initialization
-                child_weight_files.append(dad.weight_files[pos])
+                if pos != 0 and child_layers[-2]['nb_neurons'] == dad_gene['layers'][pos - 1]['nb_neurons']:
+                    # Add the dad's weight files for initialization
+                    child_weight_files.append(dad.weight_files[pos])
+                    print("Dad weight files being added")
+                    pprint(dad.weight_files[pos])
+                else:
+                    child_weight_files.append('')
+                    print("Dad weight files not added")
+                    pprint(dad.weight_files)
+                    pprint(child_weight_files)
         child_gene['layers'] = child_layers
 
         child = Genome(self.all_possible_genes, child_gene, self.ids.get_next_ID(), mom.u_ID, dad.u_ID,
@@ -150,6 +170,9 @@ class Evolver():
         #do we have a unique child or are we just retraining one we already have anyway?
         while self.master.is_duplicate(child):
             child.mutate_one_gene()
+
+        pprint(child.geneparam)
+        pprint(child_weight_files)
 
         self.master.add_genome(child)
 
