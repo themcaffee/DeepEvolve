@@ -14,6 +14,10 @@ Imagine that two (or more) *different* beneficial mutations in *different* genes
 
 DeepEvolve is based on [Matt Harvey's Keras code](https://github.com/harvitronix/neural-network-genetic-algorithm), which in turns draws from [Will Larson, Genetic Algorithms: Cool Name & Damn Simple](https://lethain.com/genetic-algorithms-cool-name-damn-simple/).
 
+I have added the following onto [jliphard's code](https://github.com/jliphard/DeepEvolve):
+  - Layers can have different amount of neurons and activation
+  - Add / remove layers at random indexes
+
 ## Important aspects of the code
 
 Each AI network architecture is represented as a string of genes. These architectures/genomes recombine with some frequency, at one randomly selected position along the genome. Note that a genome with *N* genes can recombine at *N* - 1 nontrivial positions (1, 2, 3, N-1). Specifically, ```recomb_loc = 0 || len(self.all_possible_genes)``` does not lead to recombination, but just returns the original parental genomes, and therefore ```recomb_loc = random.randint(1, len(self.all_possible_genes) - 1)```. 
@@ -93,15 +97,3 @@ This is a graphical overview of how the AI hyperparameter sets (aka genomes) evo
 
 ![alt text](https://github.com/jliphard/DeepEvolve/blob/55473015692e2af75be35fa1baf6536e300032bc/Images/Network.png "Evolution of AI hyperparameter sets")
 
-
-
-## Updates from Base Repository
-
-
-More advanced representation of gene sequence to allow for more complex networks. Because of the nature of genetic algorithms, this shouldn't really increase
-the computation cost much.
-
-The old genome only represented the number of layers, number of neurons, activation,
-and optimizers. All of the layers used the same number of neurons and activation.
-
-The new genome allows for all of the layers to have a different number of neurons and activations.
